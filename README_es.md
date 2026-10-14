@@ -92,8 +92,7 @@ Documentación de referencia (roxygen2): `man/`, o `devtools::document()` +
 `Rscript deploy.R` empaqueta `app/`, `data/processed/`, `config/` y `docs/*.md` en un
 directorio temporal y lo sube a [shinyapps.io](https://www.shinyapps.io/) vía
 `rsconnect::deployApp()`. Configuración inicial: un token de cuenta
-(`rsconnect::setAccountInfo()`) y `remotes::install_github("datakrdo/portfolio", subdir
-= "shearer")`, para que `rsconnect` pueda resolver el paquete `shearer` desde el repo
+(`rsconnect::setAccountInfo()`) y `remotes::install_github("datakrdo/shearer-goal-analysis")`, para que `rsconnect` pueda resolver el paquete `shearer` desde el repo
 público en vez de una instalación local.
 
 ## Dashboard 📊

@@ -5,7 +5,7 @@
 #
 # One-time setup before running this:
 #   rsconnect::setAccountInfo(name = ..., token = ..., secret = ...)
-#   remotes::install_github("datakrdo/portfolio", subdir = "shearer")
+#   remotes::install_github("datakrdo/shearer-goal-analysis")
 
 # app.R falls back to ROOT = "." when ../data/processed doesn't exist, so
 # app.R is placed at the bundle root (not nested under app/) with data/,

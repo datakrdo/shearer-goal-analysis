@@ -5,7 +5,7 @@ Authors@R: person("datakrdo", email = "99193152+datakrdo@users.noreply.github.co
 Description: Ingests, validates and analyses Alan Shearer's Premier League
     goal-scoring record from Transfermarkt, Wikipedia and StatsBomb, and
     powers the accompanying Shiny dashboard.
-License: Unlimited
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

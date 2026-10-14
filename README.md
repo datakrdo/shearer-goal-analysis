@@ -93,7 +93,7 @@ Reference documentation (roxygen2): `man/`, or `devtools::document()` +
 `docs/*.md` into a temp directory and pushes it to
 [shinyapps.io](https://www.shinyapps.io/) via `rsconnect::deployApp()`.
 One-time setup: an account token (`rsconnect::setAccountInfo()`) and
-`remotes::install_github("datakrdo/portfolio", subdir = "shearer")`, so
+`remotes::install_github("datakrdo/shearer-goal-analysis")`, so
 `rsconnect` can resolve the `shearer` package from the public repo instead
 of a local install.
 

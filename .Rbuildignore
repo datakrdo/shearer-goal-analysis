@@ -12,3 +12,5 @@
 ^THIRD_PARTY_NOTICES\.md$
 ^\.chrome-profile$
 ^deploy\.R$
+^LICENSE\.md$
+^\.github$
