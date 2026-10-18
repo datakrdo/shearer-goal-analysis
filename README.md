@@ -7,7 +7,27 @@ record (1992–93 to 2005–06, Blackburn Rovers and Newcastle United). Every nu
 traces to a named source and every non-trivial transformation is a tested
 function; gaps in coverage are declared, never filled.
 
-## Why it's built this way 🧭
+## Tools 🛠️
+
+- R, `{targets}`, `renv`, structured as an installable package (roxygen2)
+- dplyr, tidyr, purrr, stringr, rlang (tidy-eval plot helpers)
+- ggplot2, gt, ggsoccer
+- S7 (validated dataset class), pointblank
+- Shiny, bslib, reactable, plotly
+- testthat
+
+## Skills 🧠
+
+- Multi-source data reconciliation and provenance tracking
+- Wikitext/HTML parsing across inconsistent source formats
+- Statistical validation gating (pointblank) and independent cross-checking
+- Era/context-adjusted rate normalisation
+- Declared-coverage-gap handling (no imputation)
+- `{targets}` DAG pipeline design for cached, incremental reproducibility
+- Interactive exploration (Shiny)
+- Config-driven, testable R package structure
+
+## Design decisions 🧭
 
 Two properties of this project drive most of the design:
 
@@ -36,98 +56,7 @@ Two properties of this project drive most of the design:
    seasons have no per-match section on Wikipedia, and that gap is stated in
    `docs/validation.md`, not folded into the "checked" total.
 
-## Headline finding 📈
-
-![Era-adjusted comparators](output/figures/06_comparators.png)
-
-Hollow point: goals per appearance as recorded. Filled point: the same rate
-divided by the league's goals-per-match over that player's own seasons. The
-segment between them is the whole adjustment, drawn rather than asserted.
-
-Season by season, the finding is less flattering than the raw total suggests,
-and the dashboard says so rather than hiding it: among the ten highest career
-scorers in this dataset, Shearer ranks **4th** by era-adjusted goals per
-appearance (0.609) — behind Thierry Henry (0.695), Sergio Agüero (0.658) and
-Harry Kane (0.652). He holds the all-time goals record on **durability**, not
-on rate: 441 appearances across 14 seasons. His own three-season peak
-(1994–95 to 1996–97, adjusted 0.844–0.919) sits above every other player's
-career band — but a peak isn't a like-for-like comparison against a full
-career, and the app's Comparators tab states that caveat next to the chart
-rather than leaving a reader to infer it.
-
-## Live demo 🌐
-
-[shearer-260 on shinyapps.io](https://8o0sz0-federico-dignani.shinyapps.io/shearer-260/) — no
-install required. Free tier: sleeps when idle, first load can take a few
-seconds to wake up.
-
-## Quick start 🚀
-
-Environment is managed with [`renv`](https://rstudio.github.io/renv/):
-
-```r
-renv::restore()
-targets::tar_make()
-shiny::runApp("app")
-```
-
-`tar_make()` rebuilds `data/processed/*.parquet`, `output/figures/*.png` and
-`docs/*.md` from a [`{targets}`](https://books.ropensci.org/targets/) DAG — a
-no-op rerun skips all 57 targets, and a change to one analysis or figure
-function reruns only that target and its downstream outputs, not the ingest
-and Wikipedia-parsing stages (the slow part, and the part that never changes).
-The Shiny app reads only the parquet files (through a validated S7 read
-boundary, `R/13_dataset.R` — see below), so it runs the same way whether the
-pipeline was just rebuilt or last run weeks ago.
-
-```r
-devtools::test()   # 259 tests, no network calls
-```
-
-Reference documentation (roxygen2): `man/`, or `devtools::document()` +
-`?function_name` after `devtools::load_all()`.
-
-### Deploying the dashboard
-
-`Rscript deploy.R` bundles `app/`, `data/processed/`, `config/` and
-`docs/*.md` into a temp directory and pushes it to
-[shinyapps.io](https://www.shinyapps.io/) via `rsconnect::deployApp()`.
-One-time setup: an account token (`rsconnect::setAccountInfo()`) and
-`remotes::install_github("datakrdo/shearer-goal-analysis")`, so
-`rsconnect` can resolve the `shearer` package from the public repo instead
-of a local install.
-
-## Dashboard 📊
-
-`shiny::runApp("app")` opens a six-panel bslib dashboard (dark-mode toggle in
-the navbar, top right), with a shaded-card look and a football-angle insight
-called out under every chart (`R/14_insights.R` — tested, derived-only functions,
-never a hardcoded number in `app/app.R`):
-
-- **Overview** — six value boxes (goals, seasons, goals/90, times as league
-  top scorer, clutch-goal share, minutes per goal or assist) and the
-  goals-by-season trajectory, with the two injury-driven low seasons
-  (1997–98, 2000–01) footnoted individually.
-- **Comparators** — three charts, not tables: Shearer's season total against
-  that season's actual top scorer, a dumbbell of raw vs. era-adjusted goals
-  per 90 across the ten highest career scorers, and Shearer's own
-  era-adjusted rate season by season. Each carries a written reading of the
-  numbers underneath, computed live from the same tables the chart draws from.
-- **Goal types & context** — a donut for goal type (open play / penalty /
-  free kick / unknown), a radar chart for the context in which each goal was
-  scored (equaliser, go-ahead, extend lead, reduce deficit), a stacked bar
-  comparing that context share across all ten comparators, each fetched and
-  classified independently from their own match reports.
-- **Rival explorer** — pick an opponent and a season range; a per-meeting
-  timeline (scored vs. blanked, whole-number axis) plus the Wilson and
-  Beta-Binomial intervals on the scored-in rate, side by side.
-- **Tables** — the top 10 all-time scorers (of the full 100+ list) and the
-  full 260-goal event log, reactable-powered (sortable, filterable,
-  dark-mode aware, Shearer's row always highlighted).
-- **Data & limitations** — the generated `docs/limitations.md` and
-  `docs/methodology.md` reports, read live rather than duplicated in the app.
-
-## Pipeline 🏗️
+## How it works 🏗️
 
 ```mermaid
 graph LR
@@ -197,27 +126,7 @@ graph LR
   at startup instead of rendering a half-built dashboard.
 - `_targets.R` — the pipeline DAG; `app/app.R` — the Shiny dashboard.
 
-## Skills 🧠
-
-- Multi-source data reconciliation and provenance tracking
-- Wikitext/HTML parsing across inconsistent source formats
-- Statistical validation gating (pointblank) and independent cross-checking
-- Era/context-adjusted rate normalisation
-- Declared-coverage-gap handling (no imputation)
-- `{targets}` DAG pipeline design for cached, incremental reproducibility
-- Interactive exploration (Shiny)
-- Config-driven, testable R package structure
-
-## Tools 🛠️
-
-- R, `{targets}`, `renv`, structured as an installable package (roxygen2)
-- dplyr, tidyr, purrr, stringr, rlang (tidy-eval plot helpers)
-- ggplot2, gt, ggsoccer
-- S7 (validated dataset class), pointblank
-- Shiny, bslib, reactable, plotly
-- testthat
-
-## Data provenance and limitations 📎
+## Data sources 📎
 
 Five sources, never merged into a single number without cross-checking:
 
@@ -231,6 +140,63 @@ Five sources, never merged into a single number without cross-checking:
   1993-94 onward.
 - **StatsBomb/Hudl** — open shot data: 2 Shearer shots, both from Arsenal's
   2003/04 matches, shown as evidence of the limit, not a shot map.
+
+## Results 📊
+
+![Era-adjusted comparators](output/figures/06_comparators.png)
+
+Hollow point: goals per appearance as recorded. Filled point: the same rate
+divided by the league's goals-per-match over that player's own seasons. The
+segment between them is the whole adjustment, drawn rather than asserted.
+
+Season by season, the finding is less flattering than the raw total suggests,
+and the dashboard says so rather than hiding it: among the ten highest career
+scorers in this dataset, Shearer ranks **4th** by era-adjusted goals per
+appearance (0.609) — behind Thierry Henry (0.695), Sergio Agüero (0.658) and
+Harry Kane (0.652). He holds the all-time goals record on **durability**, not
+on rate: 441 appearances across 14 seasons. His own three-season peak
+(1994–95 to 1996–97, adjusted 0.844–0.919) sits above every other player's
+career band — but a peak isn't a like-for-like comparison against a full
+career, and the app's Comparators tab states that caveat next to the chart
+rather than leaving a reader to infer it.
+
+## Live demo 🌐
+
+[shearer-260 on shinyapps.io](https://8o0sz0-federico-dignani.shinyapps.io/shearer-260/) — no
+install required. Free tier: sleeps when idle, first load can take a few
+seconds to wake up.
+
+## Dashboard 📊
+
+`shiny::runApp("app")` opens a six-panel bslib dashboard (dark-mode toggle in
+the navbar, top right), with a shaded-card look and a football-angle insight
+called out under every chart (`R/14_insights.R` — tested, derived-only functions,
+never a hardcoded number in `app/app.R`):
+
+- **Overview** — six value boxes (goals, seasons, goals/90, times as league
+  top scorer, clutch-goal share, minutes per goal or assist) and the
+  goals-by-season trajectory, with the two injury-driven low seasons
+  (1997–98, 2000–01) footnoted individually.
+- **Comparators** — three charts, not tables: Shearer's season total against
+  that season's actual top scorer, a dumbbell of raw vs. era-adjusted goals
+  per 90 across the ten highest career scorers, and Shearer's own
+  era-adjusted rate season by season. Each carries a written reading of the
+  numbers underneath, computed live from the same tables the chart draws from.
+- **Goal types & context** — a donut for goal type (open play / penalty /
+  free kick / unknown), a radar chart for the context in which each goal was
+  scored (equaliser, go-ahead, extend lead, reduce deficit), a stacked bar
+  comparing that context share across all ten comparators, each fetched and
+  classified independently from their own match reports.
+- **Rival explorer** — pick an opponent and a season range; a per-meeting
+  timeline (scored vs. blanked, whole-number axis) plus the Wilson and
+  Beta-Binomial intervals on the scored-in rate, side by side.
+- **Tables** — the top 10 all-time scorers (of the full 100+ list) and the
+  full 260-goal event log, reactable-powered (sortable, filterable,
+  dark-mode aware, Shearer's row always highlighted).
+- **Data & limitations** — the generated `docs/limitations.md` and
+  `docs/methodology.md` reports, read live rather than duplicated in the app.
+
+## Limitations ⚠️
 
 Declared gaps, none silently filled:
 
@@ -248,3 +214,43 @@ Declared gaps, none silently filled:
 
 Full detail: `docs/validation.md`, `docs/methodology.md`,
 `docs/data_dictionary.md`, `docs/coverage.md`, `docs/limitations.md`.
+
+## Quick start 🚀
+
+Environment is managed with [`renv`](https://rstudio.github.io/renv/):
+
+```r
+renv::restore()
+targets::tar_make()
+shiny::runApp("app")
+```
+
+`tar_make()` rebuilds `data/processed/*.parquet`, `output/figures/*.png` and
+`docs/*.md` from a [`{targets}`](https://books.ropensci.org/targets/) DAG — a
+no-op rerun skips all 57 targets, and a change to one analysis or figure
+function reruns only that target and its downstream outputs, not the ingest
+and Wikipedia-parsing stages (the slow part, and the part that never changes).
+The Shiny app reads only the parquet files (through a validated S7 read
+boundary, `R/13_dataset.R` — see below), so it runs the same way whether the
+pipeline was just rebuilt or last run weeks ago.
+
+```r
+devtools::test()   # 259 tests, no network calls
+```
+
+Reference documentation (roxygen2): `man/`, or `devtools::document()` +
+`?function_name` after `devtools::load_all()`.
+
+### Deploying the dashboard
+
+`Rscript deploy.R` bundles `app/`, `data/processed/`, `config/` and
+`docs/*.md` into a temp directory and pushes it to
+[shinyapps.io](https://www.shinyapps.io/) via `rsconnect::deployApp()`.
+One-time setup: an account token (`rsconnect::setAccountInfo()`) and
+`remotes::install_github("datakrdo/shearer-goal-analysis")`, so
+`rsconnect` can resolve the `shearer` package from the public repo instead
+of a local install.
+
+## License
+
+MIT — see the `LICENSE.md` file.
