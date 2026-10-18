@@ -7,54 +7,60 @@ record (1992–93 to 2005–06, Blackburn Rovers and Newcastle United). Every nu
 traces to a named source and every non-trivial transformation is a tested
 function; gaps in coverage are declared, never filled.
 
-## Tools 🛠️
+## Results 📊
 
-- R, `{targets}`, `renv`, structured as an installable package (roxygen2)
-- dplyr, tidyr, purrr, stringr, rlang (tidy-eval plot helpers)
-- ggplot2, gt, ggsoccer
-- S7 (validated dataset class), pointblank
-- Shiny, bslib, reactable, plotly
-- testthat
+![Era-adjusted comparators](output/figures/06_comparators.png)
 
-## Skills 🧠
+Hollow point: goals per appearance as recorded. Filled point: the same rate
+divided by the league's goals-per-match over that player's own seasons. The
+segment between them is the whole adjustment, drawn rather than asserted.
 
-- Multi-source data reconciliation and provenance tracking
-- Wikitext/HTML parsing across inconsistent source formats
-- Statistical validation gating (pointblank) and independent cross-checking
-- Era/context-adjusted rate normalisation
-- Declared-coverage-gap handling (no imputation)
-- `{targets}` DAG pipeline design for cached, incremental reproducibility
-- Interactive exploration (Shiny)
-- Config-driven, testable R package structure
+Season by season, the finding is less flattering than the raw total suggests,
+and the dashboard says so rather than hiding it: among the ten highest career
+scorers in this dataset, Shearer ranks **4th** by era-adjusted goals per
+appearance (0.609) — behind Thierry Henry (0.695), Sergio Agüero (0.658) and
+Harry Kane (0.652). He holds the all-time goals record on **durability**, not
+on rate: 441 appearances across 14 seasons. His own three-season peak
+(1994–95 to 1996–97, adjusted 0.844–0.919) sits above every other player's
+career band — but a peak isn't a like-for-like comparison against a full
+career, and the app's Comparators tab states that caveat next to the chart
+rather than leaving a reader to infer it.
 
-## Design decisions 🧭
+## Live demo 🌐
 
-Two properties of this project drive most of the design:
+[shearer-260 on shinyapps.io](https://8o0sz0-federico-dignani.shinyapps.io/shearer-260/) — no
+install required. Free tier: sleeps when idle, first load can take a few
+seconds to wake up.
 
-1. **A ranking is only as honest as its era-adjustment.** Raw goals-per-appearance
-   ranks Shearer 5th among the Premier League's 100-goal club, behind four players
-   from a higher-scoring era. `R/10_analyse_comparators.R` computes each player's
-   own scoring environment — the league's goals-per-match over the seasons they
-   actually played, from `football-data.co.uk` — and adjusts their rate against it.
-   Shearer's adjusted rate rises from 0.590 to 0.609 (era index 0.967, 13 seasons
-   matched — 1992-93 has no football-data.co.uk scoring-environment source, see
-   below). The order barely moves: the adjustment narrows the gap to the modern
-   scorers, it doesn't invert the ranking, and `fig_comparators()` draws both
-   points so a reader can see the size of the effect rather than take it on faith.
-   The adjustment is also declared as coarse — Wikipedia's career span is recorded
-   in years, not a verified season list — in `docs/limitations.md`, rather than
-   presented as more precise than it is.
-2. **One source is a claim; two independent sources agreeing is evidence.** The
-   FBref-derived goal log and Wikipedia's per-match season tables share no fetch,
-   no parser, and no intermediate table. `R/03_ingest_wikipedia.R` parses every
-   Blackburn/Newcastle season article match-by-match (handling both the wikitable
-   and `{{football box collapsible}}` formats Wikipedia uses across different
-   seasons) and `R/07_validate.R` cross-checks the two logs independently, on top
-   of a [pointblank](https://rstudio.github.io/pointblank/) gate that halts the
-   pipeline on any reconciliation failure. Result: **468/468 matches agree
-   (100%)**, covering 236 of 260 goals across 12 of 14 seasons — the 2 uncovered
-   seasons have no per-match section on Wikipedia, and that gap is stated in
-   `docs/validation.md`, not folded into the "checked" total.
+## Dashboard 📊
+
+`shiny::runApp("app")` opens a six-panel bslib dashboard (dark-mode toggle in
+the navbar, top right), with a shaded-card look and a football-angle insight
+called out under every chart (`R/14_insights.R` — tested, derived-only functions,
+never a hardcoded number in `app/app.R`):
+
+- **Overview** — six value boxes (goals, seasons, goals/90, times as league
+  top scorer, clutch-goal share, minutes per goal or assist) and the
+  goals-by-season trajectory, with the two injury-driven low seasons
+  (1997–98, 2000–01) footnoted individually.
+- **Comparators** — three charts, not tables: Shearer's season total against
+  that season's actual top scorer, a dumbbell of raw vs. era-adjusted goals
+  per 90 across the ten highest career scorers, and Shearer's own
+  era-adjusted rate season by season. Each carries a written reading of the
+  numbers underneath, computed live from the same tables the chart draws from.
+- **Goal types & context** — a donut for goal type (open play / penalty /
+  free kick / unknown), a radar chart for the context in which each goal was
+  scored (equaliser, go-ahead, extend lead, reduce deficit), a stacked bar
+  comparing that context share across all ten comparators, each fetched and
+  classified independently from their own match reports.
+- **Rival explorer** — pick an opponent and a season range; a per-meeting
+  timeline (scored vs. blanked, whole-number axis) plus the Wilson and
+  Beta-Binomial intervals on the scored-in rate, side by side.
+- **Tables** — the top 10 all-time scorers (of the full 100+ list) and the
+  full 260-goal event log, reactable-powered (sortable, filterable,
+  dark-mode aware, Shearer's row always highlighted).
+- **Data & limitations** — the generated `docs/limitations.md` and
+  `docs/methodology.md` reports, read live rather than duplicated in the app.
 
 ## How it works 🏗️
 
@@ -141,79 +147,54 @@ Five sources, never merged into a single number without cross-checking:
 - **StatsBomb/Hudl** — open shot data: 2 Shearer shots, both from Arsenal's
   2003/04 matches, shown as evidence of the limit, not a shot map.
 
-## Results 📊
+## Design decisions 🧭
 
-![Era-adjusted comparators](output/figures/06_comparators.png)
+Two properties of this project drive most of the design:
 
-Hollow point: goals per appearance as recorded. Filled point: the same rate
-divided by the league's goals-per-match over that player's own seasons. The
-segment between them is the whole adjustment, drawn rather than asserted.
+1. **A ranking is only as honest as its era-adjustment.** Raw goals-per-appearance
+   ranks Shearer 5th among the Premier League's 100-goal club, behind four players
+   from a higher-scoring era. `R/10_analyse_comparators.R` computes each player's
+   own scoring environment — the league's goals-per-match over the seasons they
+   actually played, from `football-data.co.uk` — and adjusts their rate against it.
+   Shearer's adjusted rate rises from 0.590 to 0.609 (era index 0.967, 13 seasons
+   matched — 1992-93 has no football-data.co.uk scoring-environment source, see
+   below). The order barely moves: the adjustment narrows the gap to the modern
+   scorers, it doesn't invert the ranking, and `fig_comparators()` draws both
+   points so a reader can see the size of the effect rather than take it on faith.
+   The adjustment is also declared as coarse — Wikipedia's career span is recorded
+   in years, not a verified season list — in `docs/limitations.md`, rather than
+   presented as more precise than it is.
+2. **One source is a claim; two independent sources agreeing is evidence.** The
+   FBref-derived goal log and Wikipedia's per-match season tables share no fetch,
+   no parser, and no intermediate table. `R/03_ingest_wikipedia.R` parses every
+   Blackburn/Newcastle season article match-by-match (handling both the wikitable
+   and `{{football box collapsible}}` formats Wikipedia uses across different
+   seasons) and `R/07_validate.R` cross-checks the two logs independently, on top
+   of a [pointblank](https://rstudio.github.io/pointblank/) gate that halts the
+   pipeline on any reconciliation failure. Result: **468/468 matches agree
+   (100%)**, covering 236 of 260 goals across 12 of 14 seasons — the 2 uncovered
+   seasons have no per-match section on Wikipedia, and that gap is stated in
+   `docs/validation.md`, not folded into the "checked" total.
 
-Season by season, the finding is less flattering than the raw total suggests,
-and the dashboard says so rather than hiding it: among the ten highest career
-scorers in this dataset, Shearer ranks **4th** by era-adjusted goals per
-appearance (0.609) — behind Thierry Henry (0.695), Sergio Agüero (0.658) and
-Harry Kane (0.652). He holds the all-time goals record on **durability**, not
-on rate: 441 appearances across 14 seasons. His own three-season peak
-(1994–95 to 1996–97, adjusted 0.844–0.919) sits above every other player's
-career band — but a peak isn't a like-for-like comparison against a full
-career, and the app's Comparators tab states that caveat next to the chart
-rather than leaving a reader to infer it.
+## Tools 🛠️
 
-## Live demo 🌐
+- R, `{targets}`, `renv`, structured as an installable package (roxygen2)
+- dplyr, tidyr, purrr, stringr, rlang (tidy-eval plot helpers)
+- ggplot2, gt, ggsoccer
+- S7 (validated dataset class), pointblank
+- Shiny, bslib, reactable, plotly
+- testthat
 
-[shearer-260 on shinyapps.io](https://8o0sz0-federico-dignani.shinyapps.io/shearer-260/) — no
-install required. Free tier: sleeps when idle, first load can take a few
-seconds to wake up.
+## Skills 🧠
 
-## Dashboard 📊
-
-`shiny::runApp("app")` opens a six-panel bslib dashboard (dark-mode toggle in
-the navbar, top right), with a shaded-card look and a football-angle insight
-called out under every chart (`R/14_insights.R` — tested, derived-only functions,
-never a hardcoded number in `app/app.R`):
-
-- **Overview** — six value boxes (goals, seasons, goals/90, times as league
-  top scorer, clutch-goal share, minutes per goal or assist) and the
-  goals-by-season trajectory, with the two injury-driven low seasons
-  (1997–98, 2000–01) footnoted individually.
-- **Comparators** — three charts, not tables: Shearer's season total against
-  that season's actual top scorer, a dumbbell of raw vs. era-adjusted goals
-  per 90 across the ten highest career scorers, and Shearer's own
-  era-adjusted rate season by season. Each carries a written reading of the
-  numbers underneath, computed live from the same tables the chart draws from.
-- **Goal types & context** — a donut for goal type (open play / penalty /
-  free kick / unknown), a radar chart for the context in which each goal was
-  scored (equaliser, go-ahead, extend lead, reduce deficit), a stacked bar
-  comparing that context share across all ten comparators, each fetched and
-  classified independently from their own match reports.
-- **Rival explorer** — pick an opponent and a season range; a per-meeting
-  timeline (scored vs. blanked, whole-number axis) plus the Wilson and
-  Beta-Binomial intervals on the scored-in rate, side by side.
-- **Tables** — the top 10 all-time scorers (of the full 100+ list) and the
-  full 260-goal event log, reactable-powered (sortable, filterable,
-  dark-mode aware, Shearer's row always highlighted).
-- **Data & limitations** — the generated `docs/limitations.md` and
-  `docs/methodology.md` reports, read live rather than duplicated in the app.
-
-## Limitations ⚠️
-
-Declared gaps, none silently filled:
-
-- **1992-93** has no league-wide scoring-environment source and is left out of
-  the era adjustment, not backfilled.
-- **Goal `type`** carries an honest "unknown" bucket for anything that doesn't
-  match a Transfermarkt row, not imputed.
-- **Real minutes** (and so `goals_per_90` and minutes per goal or assist) are
-  only available for the comparators pinned in `config.yaml`'s
-  `sources.fbref.comparator_player_ids` — every other player on the all-time
-  list keeps those columns as `NA`.
-- **The era adjustment** uses career-span years from Wikipedia's all-time
-  table, which can be off by a season at either edge for a player who didn't
-  play every season in that span.
-
-Full detail: `docs/validation.md`, `docs/methodology.md`,
-`docs/data_dictionary.md`, `docs/coverage.md`, `docs/limitations.md`.
+- Multi-source data reconciliation and provenance tracking
+- Wikitext/HTML parsing across inconsistent source formats
+- Statistical validation gating (pointblank) and independent cross-checking
+- Era/context-adjusted rate normalisation
+- Declared-coverage-gap handling (no imputation)
+- `{targets}` DAG pipeline design for cached, incremental reproducibility
+- Interactive exploration (Shiny)
+- Config-driven, testable R package structure
 
 ## Quick start 🚀
 
@@ -250,6 +231,25 @@ One-time setup: an account token (`rsconnect::setAccountInfo()`) and
 `remotes::install_github("datakrdo/shearer-goal-analysis")`, so
 `rsconnect` can resolve the `shearer` package from the public repo instead
 of a local install.
+
+## Limitations ⚠️
+
+Declared gaps, none silently filled:
+
+- **1992-93** has no league-wide scoring-environment source and is left out of
+  the era adjustment, not backfilled.
+- **Goal `type`** carries an honest "unknown" bucket for anything that doesn't
+  match a Transfermarkt row, not imputed.
+- **Real minutes** (and so `goals_per_90` and minutes per goal or assist) are
+  only available for the comparators pinned in `config.yaml`'s
+  `sources.fbref.comparator_player_ids` — every other player on the all-time
+  list keeps those columns as `NA`.
+- **The era adjustment** uses career-span years from Wikipedia's all-time
+  table, which can be off by a season at either edge for a player who didn't
+  play every season in that span.
+
+Full detail: `docs/validation.md`, `docs/methodology.md`,
+`docs/data_dictionary.md`, `docs/coverage.md`, `docs/limitations.md`.
 
 ## License
 

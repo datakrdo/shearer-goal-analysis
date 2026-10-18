@@ -8,54 +8,60 @@ Newcastle United). Cada número se rastrea hasta una fuente nombrada y cada
 transformación no trivial es una función testeada; los huecos de cobertura se declaran,
 nunca se rellenan.
 
-## Herramientas 🛠️
+## Resultados 📊
 
-- R, `{targets}`, `renv`, estructurado como paquete instalable (roxygen2)
-- dplyr, tidyr, purrr, stringr, rlang (helpers de gráficos con tidy-eval)
-- ggplot2, gt, ggsoccer
-- S7 (clase de dataset validada), pointblank
-- Shiny, bslib, reactable, plotly
-- testthat
+![Comparadores ajustados por época](output/figures/06_comparators.png)
 
-## Habilidades 🧠
+Punto hueco: goles por partido tal como se registraron. Punto lleno: la misma tasa
+dividida por los goles por partido de la liga durante las temporadas propias de ese
+jugador. El segmento entre ambos es el ajuste completo, dibujado en vez de afirmado.
 
-- Reconciliación de datos multi-fuente y trazabilidad de procedencia
-- Parseo de wikitexto/HTML entre formatos de fuente inconsistentes
-- Validación estadística con gates (pointblank) y cruce independiente
-- Normalización de tasas ajustada por época/contexto
-- Manejo de huecos de cobertura declarados (sin imputación)
-- Diseño de pipeline DAG con `{targets}` para reproducibilidad incremental cacheada
-- Exploración interactiva (Shiny)
-- Estructura de paquete R testeable y config-driven
+Temporada a temporada, el hallazgo es menos favorecedor que el total de carrera, y el
+dashboard lo dice en vez de esconderlo: entre los diez máximos goleadores de carrera de
+este dataset, Shearer queda **4to** en goles por partido ajustados por época (0,609) —
+detrás de Thierry Henry (0,695), Sergio Agüero (0,658) y Harry Kane (0,652). Sostiene el
+récord histórico de goles por **durabilidad**, no por tasa: 441 partidos en 14
+temporadas. Su propio pico de tres temporadas (1994–95 a 1996–97, ajustado 0,844–0,919)
+queda por encima de la banda de carrera de cualquier otro jugador — pero un pico no es
+una comparación equivalente contra una carrera completa, y la pestaña Comparadores de la
+app aclara eso junto al gráfico en vez de dejarlo para que se infiera.
 
-## Decisiones de diseño 🧭
+## Demo en vivo 🌐
 
-Dos propiedades del proyecto guían la mayoría de las decisiones de diseño:
+[shearer-260 en shinyapps.io](https://8o0sz0-federico-dignani.shinyapps.io/shearer-260/) —
+sin instalación. Plan gratuito: se duerme si está inactiva, la primera carga puede tardar
+unos segundos en despertarla.
 
-1. **Un ranking es tan honesto como su ajuste por época.** Los goles por partido crudos
-   ubican a Shearer 5to entre el club de los 100 goles de la Premier League, detrás de
-   cuatro jugadores de una época más goleadora. `R/10_analyse_comparators.R` calcula el
-   entorno goleador propio de cada jugador — los goles por partido de la liga durante las
-   temporadas en las que jugó, tomado de `football-data.co.uk` — y ajusta su tasa contra
-   ese entorno. La tasa ajustada de Shearer sube de 0,590 a 0,609 (índice de época 0,967,
-   13 temporadas emparejadas — 1992-93 no tiene fuente de entorno goleador en
-   football-data.co.uk, ver abajo). El orden casi no cambia: el ajuste acorta la brecha
-   con los goleadores modernos, no invierte el ranking, y `fig_comparators()` dibuja
-   ambos puntos para que quien lo lea vea el tamaño del efecto en vez de tener que
-   creerlo. El ajuste también se declara como aproximado — el rango de carrera de
-   Wikipedia está registrado en años, no como una lista de temporadas verificada — en
-   `docs/limitations.md`, en vez de presentarse como más preciso de lo que es.
-2. **Una fuente es una afirmación; dos fuentes independientes que coinciden es
-   evidencia.** El registro de goles derivado de FBref y las tablas de partido a partido
-   de Wikipedia no comparten fetch, ni parser, ni tabla intermedia. `R/03_ingest_wikipedia.R`
-   parsea cada artículo de temporada de Blackburn/Newcastle partido por partido (maneja
-   tanto el formato wikitable como el `{{football box collapsible}}` que usa Wikipedia
-   según la temporada) y `R/07_validate.R` cruza los dos registros de forma
-   independiente, además de un gate de [pointblank](https://rstudio.github.io/pointblank/)
-   que frena el pipeline ante cualquier falla de reconciliación. Resultado: **468/468
-   partidos coinciden (100%)**, cubriendo 236 de los 260 goles en 12 de 14 temporadas —
-   las 2 temporadas sin cobertura no tienen sección partido a partido en Wikipedia, y ese
-   hueco se declara en `docs/validation.md`, sin sumarse al total "verificado".
+## Dashboard 📊
+
+`shiny::runApp("app")` abre un dashboard bslib de seis pestañas (toggle de modo oscuro
+en la navbar, arriba a la derecha), con un look de tarjetas sombreadas y un insight
+futbolístico debajo de cada gráfico (`R/14_insights.R` — funciones testeadas y
+derivadas, nunca un número hardcodeado en `app/app.R`):
+
+- **Overview** — seis value boxes (goles, temporadas, goles/90, veces como goleador de
+  la liga, porcentaje de goles clutch, minutos por gol o asistencia) y la trayectoria de
+  goles por temporada, con las dos temporadas bajas por lesión (1997–98, 2000–01)
+  anotadas individualmente.
+- **Comparadores** — tres gráficos, no tablas: el total de temporada de Shearer contra
+  el goleador real de esa temporada, un gráfico dumbbell de goles por 90 crudos vs.
+  ajustados por época entre los diez máximos goleadores de carrera, y la tasa ajustada
+  por época propia de Shearer temporada a temporada. Cada uno lleva una lectura escrita
+  de los números debajo, calculada en vivo desde las mismas tablas que dibuja el
+  gráfico.
+- **Tipos y contexto de gol** — una dona por tipo de gol (juego abierto / penal / tiro
+  libre / desconocido), un radar por el contexto en que se marcó cada gol (empate,
+  ponerse en ventaja, ampliar ventaja, descontar), una barra apilada comparando esa
+  distribución de contexto entre los diez comparadores, cada uno buscado y clasificado
+  de forma independiente desde sus propios reportes de partido.
+- **Explorador de rivales** — elegí un rival y un rango de temporadas; una línea de
+  tiempo por encuentro (marcó vs. no marcó, eje de números enteros) más los intervalos
+  de Wilson y Beta-Binomial sobre la tasa de "marcó", lado a lado.
+- **Tablas** — los 10 máximos goleadores históricos (de la lista completa de más de
+  100) y el registro completo de los 260 goles, con reactable (ordenable, filtrable,
+  compatible con modo oscuro, la fila de Shearer siempre resaltada).
+- **Datos y limitaciones** — los reportes generados `docs/limitations.md` y
+  `docs/methodology.md`, leídos en vivo en vez de duplicados en la app.
 
 ## Cómo funciona 🏗️
 
@@ -145,79 +151,54 @@ Cinco fuentes, nunca fusionadas en un solo número sin cruzarlas:
   contra el Arsenal en 2003/04, mostrados como evidencia del límite, no como mapa de
   tiros.
 
-## Resultados 📊
+## Decisiones de diseño 🧭
 
-![Comparadores ajustados por época](output/figures/06_comparators.png)
+Dos propiedades del proyecto guían la mayoría de las decisiones de diseño:
 
-Punto hueco: goles por partido tal como se registraron. Punto lleno: la misma tasa
-dividida por los goles por partido de la liga durante las temporadas propias de ese
-jugador. El segmento entre ambos es el ajuste completo, dibujado en vez de afirmado.
+1. **Un ranking es tan honesto como su ajuste por época.** Los goles por partido crudos
+   ubican a Shearer 5to entre el club de los 100 goles de la Premier League, detrás de
+   cuatro jugadores de una época más goleadora. `R/10_analyse_comparators.R` calcula el
+   entorno goleador propio de cada jugador — los goles por partido de la liga durante las
+   temporadas en las que jugó, tomado de `football-data.co.uk` — y ajusta su tasa contra
+   ese entorno. La tasa ajustada de Shearer sube de 0,590 a 0,609 (índice de época 0,967,
+   13 temporadas emparejadas — 1992-93 no tiene fuente de entorno goleador en
+   football-data.co.uk, ver abajo). El orden casi no cambia: el ajuste acorta la brecha
+   con los goleadores modernos, no invierte el ranking, y `fig_comparators()` dibuja
+   ambos puntos para que quien lo lea vea el tamaño del efecto en vez de tener que
+   creerlo. El ajuste también se declara como aproximado — el rango de carrera de
+   Wikipedia está registrado en años, no como una lista de temporadas verificada — en
+   `docs/limitations.md`, en vez de presentarse como más preciso de lo que es.
+2. **Una fuente es una afirmación; dos fuentes independientes que coinciden es
+   evidencia.** El registro de goles derivado de FBref y las tablas de partido a partido
+   de Wikipedia no comparten fetch, ni parser, ni tabla intermedia. `R/03_ingest_wikipedia.R`
+   parsea cada artículo de temporada de Blackburn/Newcastle partido por partido (maneja
+   tanto el formato wikitable como el `{{football box collapsible}}` que usa Wikipedia
+   según la temporada) y `R/07_validate.R` cruza los dos registros de forma
+   independiente, además de un gate de [pointblank](https://rstudio.github.io/pointblank/)
+   que frena el pipeline ante cualquier falla de reconciliación. Resultado: **468/468
+   partidos coinciden (100%)**, cubriendo 236 de los 260 goles en 12 de 14 temporadas —
+   las 2 temporadas sin cobertura no tienen sección partido a partido en Wikipedia, y ese
+   hueco se declara en `docs/validation.md`, sin sumarse al total "verificado".
 
-Temporada a temporada, el hallazgo es menos favorecedor que el total de carrera, y el
-dashboard lo dice en vez de esconderlo: entre los diez máximos goleadores de carrera de
-este dataset, Shearer queda **4to** en goles por partido ajustados por época (0,609) —
-detrás de Thierry Henry (0,695), Sergio Agüero (0,658) y Harry Kane (0,652). Sostiene el
-récord histórico de goles por **durabilidad**, no por tasa: 441 partidos en 14
-temporadas. Su propio pico de tres temporadas (1994–95 a 1996–97, ajustado 0,844–0,919)
-queda por encima de la banda de carrera de cualquier otro jugador — pero un pico no es
-una comparación equivalente contra una carrera completa, y la pestaña Comparadores de la
-app aclara eso junto al gráfico en vez de dejarlo para que se infiera.
+## Herramientas 🛠️
 
-## Demo en vivo 🌐
+- R, `{targets}`, `renv`, estructurado como paquete instalable (roxygen2)
+- dplyr, tidyr, purrr, stringr, rlang (helpers de gráficos con tidy-eval)
+- ggplot2, gt, ggsoccer
+- S7 (clase de dataset validada), pointblank
+- Shiny, bslib, reactable, plotly
+- testthat
 
-[shearer-260 en shinyapps.io](https://8o0sz0-federico-dignani.shinyapps.io/shearer-260/) —
-sin instalación. Plan gratuito: se duerme si está inactiva, la primera carga puede tardar
-unos segundos en despertarla.
+## Habilidades 🧠
 
-## Dashboard 📊
-
-`shiny::runApp("app")` abre un dashboard bslib de seis pestañas (toggle de modo oscuro
-en la navbar, arriba a la derecha), con un look de tarjetas sombreadas y un insight
-futbolístico debajo de cada gráfico (`R/14_insights.R` — funciones testeadas y
-derivadas, nunca un número hardcodeado en `app/app.R`):
-
-- **Overview** — seis value boxes (goles, temporadas, goles/90, veces como goleador de
-  la liga, porcentaje de goles clutch, minutos por gol o asistencia) y la trayectoria de
-  goles por temporada, con las dos temporadas bajas por lesión (1997–98, 2000–01)
-  anotadas individualmente.
-- **Comparadores** — tres gráficos, no tablas: el total de temporada de Shearer contra
-  el goleador real de esa temporada, un gráfico dumbbell de goles por 90 crudos vs.
-  ajustados por época entre los diez máximos goleadores de carrera, y la tasa ajustada
-  por época propia de Shearer temporada a temporada. Cada uno lleva una lectura escrita
-  de los números debajo, calculada en vivo desde las mismas tablas que dibuja el
-  gráfico.
-- **Tipos y contexto de gol** — una dona por tipo de gol (juego abierto / penal / tiro
-  libre / desconocido), un radar por el contexto en que se marcó cada gol (empate,
-  ponerse en ventaja, ampliar ventaja, descontar), una barra apilada comparando esa
-  distribución de contexto entre los diez comparadores, cada uno buscado y clasificado
-  de forma independiente desde sus propios reportes de partido.
-- **Explorador de rivales** — elegí un rival y un rango de temporadas; una línea de
-  tiempo por encuentro (marcó vs. no marcó, eje de números enteros) más los intervalos
-  de Wilson y Beta-Binomial sobre la tasa de "marcó", lado a lado.
-- **Tablas** — los 10 máximos goleadores históricos (de la lista completa de más de
-  100) y el registro completo de los 260 goles, con reactable (ordenable, filtrable,
-  compatible con modo oscuro, la fila de Shearer siempre resaltada).
-- **Datos y limitaciones** — los reportes generados `docs/limitations.md` y
-  `docs/methodology.md`, leídos en vivo en vez de duplicados en la app.
-
-## Limitaciones ⚠️
-
-Huecos declarados, ninguno rellenado en silencio:
-
-- **1992-93** no tiene fuente de entorno goleador a nivel liga y queda fuera del ajuste
-  por época, no se rellena.
-- **El `type` de gol** tiene un bucket honesto de "desconocido" para lo que no matchea
-  con una fila de Transfermarkt, no se imputa.
-- **Los minutos reales** (y por lo tanto `goals_per_90` y minutos por gol o asistencia)
-  solo están disponibles para los comparadores fijados en
-  `sources.fbref.comparator_player_ids` de `config.yaml` — el resto de la lista
-  histórica mantiene esas columnas como `NA`.
-- **El ajuste por época** usa los años de rango de carrera de la tabla histórica de
-  Wikipedia, que puede desfasarse una temporada en cualquiera de los dos extremos para
-  un jugador que no jugó todas las temporadas de ese rango.
-
-Detalle completo: `docs/validation.md`, `docs/methodology.md`,
-`docs/data_dictionary.md`, `docs/coverage.md`, `docs/limitations.md`.
+- Reconciliación de datos multi-fuente y trazabilidad de procedencia
+- Parseo de wikitexto/HTML entre formatos de fuente inconsistentes
+- Validación estadística con gates (pointblank) y cruce independiente
+- Normalización de tasas ajustada por época/contexto
+- Manejo de huecos de cobertura declarados (sin imputación)
+- Diseño de pipeline DAG con `{targets}` para reproducibilidad incremental cacheada
+- Exploración interactiva (Shiny)
+- Estructura de paquete R testeable y config-driven
 
 ## Inicio rápido 🚀
 
@@ -252,6 +233,25 @@ directorio temporal y lo sube a [shinyapps.io](https://www.shinyapps.io/) vía
 `rsconnect::deployApp()`. Configuración inicial: un token de cuenta
 (`rsconnect::setAccountInfo()`) y `remotes::install_github("datakrdo/shearer-goal-analysis")`, para que `rsconnect` pueda resolver el paquete `shearer` desde el repo
 público en vez de una instalación local.
+
+## Limitaciones ⚠️
+
+Huecos declarados, ninguno rellenado en silencio:
+
+- **1992-93** no tiene fuente de entorno goleador a nivel liga y queda fuera del ajuste
+  por época, no se rellena.
+- **El `type` de gol** tiene un bucket honesto de "desconocido" para lo que no matchea
+  con una fila de Transfermarkt, no se imputa.
+- **Los minutos reales** (y por lo tanto `goals_per_90` y minutos por gol o asistencia)
+  solo están disponibles para los comparadores fijados en
+  `sources.fbref.comparator_player_ids` de `config.yaml` — el resto de la lista
+  histórica mantiene esas columnas como `NA`.
+- **El ajuste por época** usa los años de rango de carrera de la tabla histórica de
+  Wikipedia, que puede desfasarse una temporada en cualquiera de los dos extremos para
+  un jugador que no jugó todas las temporadas de ese rango.
+
+Detalle completo: `docs/validation.md`, `docs/methodology.md`,
+`docs/data_dictionary.md`, `docs/coverage.md`, `docs/limitations.md`.
 
 ## Licencia
 
